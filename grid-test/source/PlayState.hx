@@ -4,13 +4,17 @@ import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.FlxState;
 import flixel.input.mouse.FlxMouseEventManager;
-import flixel.text.FlxText;
 import flixel.util.FlxColor;
 import gameGrid.GridClasses;
+import haxe.ds.Vector;
+
+using flixel.util.FlxSpriteUtil;
 
 class PlayState extends FlxState
 {
-	var text:flixel.text.FlxText;
+	// var selectionStateMachine:Map<String, Array<String>> = ["None" => ["One"], "One" => ["None"]];
+	// var currentState = "None";
+	// var currentCenter:Option<Vector<Int>> = None;
 	var h:FlxSprite;
 	var v:FlxSprite;
 	var dots:Array<FlxSprite> = [];
@@ -22,6 +26,9 @@ class PlayState extends FlxState
 	var gridHeight:Int;
 	var gridWidth:Int;
 
+	var linesCanvas:FlxSprite;
+	var baseLineStyle:LineStyle = {color: FlxColor.fromRGB(75, 75, 75, 255), thickness: 2};
+
 	var center:FlxSprite;
 
 	var gameGrid:GridWithBorders;
@@ -29,6 +36,9 @@ class PlayState extends FlxState
 	override public function create()
 	{
 		super.create();
+
+		linesCanvas = new FlxSprite();
+		linesCanvas.makeGraphic(FlxG.width, FlxG.height, FlxColor.TRANSPARENT, true);
 
 		gridWidth = Std.int((FlxG.width - (2 * padding)) / (dotSpacing));
 		gridHeight = Std.int((FlxG.height - (2 * padding)) / (dotSpacing));
@@ -39,28 +49,49 @@ class PlayState extends FlxState
 			newDot.makeGraphic(dotRadius, dotRadius, FlxColor.WHITE);
 			newDot.x = Std.int(padding + dotSpacing / 2) + pos.x * dotSpacing;
 			newDot.y = Std.int(padding + dotSpacing / 2) + pos.y * dotSpacing;
-			add(newDot);
+
 			// https://gamefromscratch.com/haxeflixel-tutorial-mouse-input/
-			FlxMouseEventManager.add(newDot, function(s:FlxSprite)
-			{
-				trace('MouseDown ${pos.x} ${pos.y}');
-			}, function(s:FlxSprite)
-			{
-				trace('MouseUp  ${pos.x} ${pos.y}');
-			}, function(s:FlxSprite)
-			{
-				trace('MouseOver  ${pos.x} ${pos.y}');
-			}, function(s:FlxSprite)
-			{
-				trace('MouseOut  ${pos.x} ${pos.y}');
-			});
+			FlxMouseEventManager.add( //
+				newDot, //
+				function(s:FlxSprite)
+				{
+					trace('MouseDown ${pos.x} ${pos.y}');
+				}, //
+				function(s:FlxSprite)
+				{
+					trace('MouseUp  ${pos.x} ${pos.y}');
+				}, //
+				function(s:FlxSprite)
+				{
+					trace('MouseOver  ${pos.x} ${pos.y}');
+				}, //
+				function(s:FlxSprite)
+				{
+					trace('MouseOut  ${pos.x} ${pos.y}');
+				});
 			dots.push(newDot);
+
+			var startX = Std.int(padding + dotSpacing / 2) + pos.x * dotSpacing;
+			var startY = Std.int(padding + dotSpacing / 2) + pos.y * dotSpacing;
+			var endXRight = Std.int(padding + dotSpacing / 2) + (pos.x + 1) * dotSpacing;
+			var endYDown = Std.int(padding + dotSpacing / 2) + (pos.y + 1) * dotSpacing;
+
+			if (pos.x < gridWidth - 1)
+			{
+				linesCanvas.drawLine(startX + 2, startY + 2, endXRight + 2, startY + 2, baseLineStyle);
+			}
+			if (pos.y < gridHeight - 1)
+			{
+				linesCanvas.drawLine(startX + 2, startY + 2, startX + 2, endYDown + 2, baseLineStyle);
+			}
 		}
 
-		// text = new FlxText(0, 0, 0, "Grid-test", 64);
-		// text.setFormat(null, 64, FlxColor.RED);
-		// text.screenCenter();
-		// add(text);
+		add(linesCanvas);
+
+		for (dot in dots)
+		{
+			add(dot);
+		}
 
 		h = new FlxSprite();
 		h.makeGraphic(3, FlxG.height, FlxColor.BLUE);
@@ -78,6 +109,25 @@ class PlayState extends FlxState
 	override public function update(elapsed:Float)
 	{
 		super.update(elapsed);
+
+		// linesCanvas.fill(FlxColor.TRANSPARENT);
+
+		// for (pos in new GridIterator(gridWidth, gridHeight))
+		// {
+		// 	var startX = Std.int(padding + dotSpacing / 2) + pos.x * dotSpacing;
+		// 	var startY = Std.int(padding + dotSpacing / 2) + pos.y * dotSpacing;
+		// 	var endXRight = Std.int(padding + dotSpacing / 2) + (pos.x + 1) * dotSpacing;
+		// 	var endYDown = Std.int(padding + dotSpacing / 2) + (pos.y + 1) * dotSpacing;
+
+		// 	if (pos.x < gridWidth - 1)
+		// 	{
+		// 		linesCanvas.drawLine(startX + 2, startY + 2, endXRight + 2, startY + 2, baseLineStyle);
+		// 	}
+		// 	if (pos.y < gridHeight - 1)
+		// 	{
+		// 		linesCanvas.drawLine(startX + 2, startY + 2, startX + 2, endYDown + 2, baseLineStyle);
+		// 	}
+		// }
 
 		h.x = FlxG.mouse.x - 1;
 		v.y = FlxG.mouse.y - 1;
