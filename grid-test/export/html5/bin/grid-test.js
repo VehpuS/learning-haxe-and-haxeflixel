@@ -893,7 +893,7 @@ ApplicationMain.main = function() {
 ApplicationMain.create = function(config) {
 	var app = new openfl_display_Application();
 	ManifestResources.init(config);
-	app.meta.h["build"] = "2";
+	app.meta.h["build"] = "3";
 	app.meta.h["company"] = "HaxeFlixel";
 	app.meta.h["file"] = "grid-test";
 	app.meta.h["name"] = "grid-test";
@@ -5486,6 +5486,16 @@ flixel_FlxState.prototype = $extend(flixel_group_FlxTypedGroup.prototype,{
 var PlayState = function(MaxSize) {
 	var color = flixel_util_FlxColor._new();
 	color &= -16711681;
+	color |= 14548992;
+	color &= -65281;
+	color |= 56832;
+	color &= -256;
+	color |= 222;
+	color &= 16777215;
+	color |= -16777216;
+	this.selectedLineStyle = { color : color, thickness : 2};
+	var color = flixel_util_FlxColor._new();
+	color &= -16711681;
 	color |= 4915200;
 	color &= -65281;
 	color |= 19200;
@@ -5497,6 +5507,7 @@ var PlayState = function(MaxSize) {
 	this.dotSpacing = 20;
 	this.dotRadius = 4;
 	this.padding = 10;
+	this.eventDots = [];
 	this.dots = [];
 	flixel_FlxState.call(this,MaxSize);
 };
@@ -5507,6 +5518,7 @@ PlayState.prototype = $extend(flixel_FlxState.prototype,{
 	h: null
 	,v: null
 	,dots: null
+	,eventDots: null
 	,padding: null
 	,dotRadius: null
 	,dotSpacing: null
@@ -5514,10 +5526,37 @@ PlayState.prototype = $extend(flixel_FlxState.prototype,{
 	,gridWidth: null
 	,linesCanvas: null
 	,baseLineStyle: null
+	,selectedLineStyle: null
 	,center: null
 	,gameGrid: null
+	,currentlySelectedPoint: null
+	,selectedDot: null
 	,create: function() {
+		var _gthis = this;
 		flixel_FlxState.prototype.create.call(this);
+		this.currentlySelectedPoint = new flixel_math_FlxPoint(-3,-3);
+		this.selectedDot = new flixel_FlxSprite();
+		var tmp = this.selectedDot;
+		var tmp1 = this.dotRadius * 3;
+		var tmp2 = this.dotRadius * 3;
+		var Alpha = 160;
+		if(Alpha == null) {
+			Alpha = 255;
+		}
+		var color = flixel_util_FlxColor._new();
+		var Alpha1 = Alpha;
+		if(Alpha1 == null) {
+			Alpha1 = 255;
+		}
+		color &= -16711681;
+		color |= 14548992;
+		color &= -65281;
+		color |= 56832;
+		color &= -256;
+		color |= 0;
+		color &= 16777215;
+		color |= (Alpha1 > 255 ? 255 : Alpha1 < 0 ? 0 : Alpha1) << 24;
+		tmp.makeGraphic(tmp1,tmp2,color);
 		this.linesCanvas = new flixel_FlxSprite();
 		this.linesCanvas.makeGraphic(flixel_FlxG.width,flixel_FlxG.height,0,true);
 		this.gridWidth = (flixel_FlxG.width - 2 * this.padding) / this.dotSpacing | 0;
@@ -5528,50 +5567,110 @@ PlayState.prototype = $extend(flixel_FlxState.prototype,{
 		var _g_i = 0;
 		_g_gridWidth = this.gridWidth;
 		_g_gridHeight = this.gridHeight;
-		while(_g_i < _g_gridWidth * _g_gridHeight) {
+		while(_g_i < (_g_gridWidth + 1) * (_g_gridHeight + 1)) {
 			var pos_y = [];
 			var pos_x = [];
 			var index = _g_i++;
 			var gridWidth = _g_gridWidth;
 			var pos_index = index;
-			pos_x[0] = index % gridWidth;
-			pos_y[0] = index / gridWidth | 0;
+			pos_x[0] = index % (gridWidth + 1);
+			pos_y[0] = index / (gridWidth + 1) | 0;
+			var coordX = [(this.padding + this.dotSpacing / 2 | 0) + pos_x[0] * this.dotSpacing];
+			var coordY = [(this.padding + this.dotSpacing / 2 | 0) + pos_y[0] * this.dotSpacing];
+			var endXRight = [(this.padding + this.dotSpacing / 2 | 0) + (pos_x[0] + 1) * this.dotSpacing];
+			var endYDown = [(this.padding + this.dotSpacing / 2 | 0) + (pos_y[0] + 1) * this.dotSpacing];
+			var endXLeft = [(this.padding + this.dotSpacing / 2 | 0) + (pos_x[0] - 1) * this.dotSpacing];
+			var endYTop = [(this.padding + this.dotSpacing / 2 | 0) + (pos_y[0] - 1) * this.dotSpacing];
 			var newDot = new flixel_FlxSprite();
 			newDot.makeGraphic(this.dotRadius,this.dotRadius,-1);
-			newDot.set_x((this.padding + this.dotSpacing / 2 | 0) + pos_x[0] * this.dotSpacing);
-			newDot.set_y((this.padding + this.dotSpacing / 2 | 0) + pos_y[0] * this.dotSpacing);
-			flixel_input_mouse_FlxMouseEventManager.add(newDot,(function(pos_y,pos_x) {
+			newDot.set_x(coordX[0]);
+			newDot.set_y(coordY[0]);
+			var newEventDot = new flixel_FlxSprite();
+			var tmp = 3 * this.dotRadius;
+			var tmp1 = 3 * this.dotRadius;
+			var Alpha = 1;
+			if(Alpha == null) {
+				Alpha = 255;
+			}
+			var color = flixel_util_FlxColor._new();
+			var Alpha1 = Alpha;
+			if(Alpha1 == null) {
+				Alpha1 = 255;
+			}
+			color &= -16711681;
+			color |= 0;
+			color &= -65281;
+			color |= 0;
+			color &= -256;
+			color |= 0;
+			color &= 16777215;
+			color |= (Alpha1 > 255 ? 255 : Alpha1 < 0 ? 0 : Alpha1) << 24;
+			newEventDot.makeGraphic(tmp,tmp1,color);
+			newEventDot.set_x(coordX[0] - this.dotRadius);
+			newEventDot.set_y(coordY[0] - this.dotRadius);
+			flixel_input_mouse_FlxMouseEventManager.add(newEventDot,(function(pos_y,pos_x,endYTop,endXLeft,endYDown,endXRight,coordY,coordX) {
 				return function(s) {
-					haxe_Log.trace("MouseDown " + pos_x[0] + " " + pos_y[0],{ fileName : "source/PlayState.hx", lineNumber : 58, className : "PlayState", methodName : "create"});
+					if(_gthis.currentlySelectedPoint.x < -2 || _gthis.currentlySelectedPoint.y < -2) {
+						haxe_Log.trace("MouseDown " + pos_x[0] + " " + pos_y[0] + " - not on screen",{ fileName : "source/PlayState.hx", lineNumber : 82, className : "PlayState", methodName : "create"});
+						_gthis.selectedDot.set_x(coordX[0] - _gthis.dotRadius);
+						_gthis.selectedDot.set_y(coordY[0] - _gthis.dotRadius);
+						_gthis.currentlySelectedPoint.set_x(pos_x[0]);
+						_gthis.currentlySelectedPoint.set_y(pos_y[0]);
+						_gthis.gameGrid.setGridDataByCoords(pos_x[0],pos_y[0],gameGrid_GridWithBordersToggleType.topLeftCorner);
+						_gthis.add(_gthis.selectedDot);
+					} else {
+						haxe_Log.trace("MouseDown " + pos_x[0] + " " + pos_y[0] + " - on screen " + _gthis.currentlySelectedPoint.x + " " + _gthis.currentlySelectedPoint.y,{ fileName : "source/PlayState.hx", lineNumber : 92, className : "PlayState", methodName : "create"});
+						_gthis.remove(_gthis.selectedDot);
+						if(_gthis.currentlySelectedPoint.x == pos_x[0] && _gthis.currentlySelectedPoint.y == pos_y[0] + 1) {
+							_gthis.gameGrid.setGridDataByCoords(pos_x[0],pos_y[0] + 1,gameGrid_GridWithBordersToggleType.leftBorder);
+							flixel_util_FlxSpriteUtil.drawLine(_gthis.linesCanvas,coordX[0] + 2,coordY[0] + 2,coordX[0] + 2,endYDown[0] + 2,_gthis.selectedLineStyle);
+						} else if(_gthis.currentlySelectedPoint.x == pos_x[0] && _gthis.currentlySelectedPoint.y == pos_y[0] - 1) {
+							_gthis.gameGrid.setGridDataByCoords(pos_x[0],pos_y[0],gameGrid_GridWithBordersToggleType.leftBorder);
+							flixel_util_FlxSpriteUtil.drawLine(_gthis.linesCanvas,coordX[0] + 2,coordY[0] + 2,coordX[0] + 2,endYTop[0] + 2,_gthis.selectedLineStyle);
+						} else if(_gthis.currentlySelectedPoint.x == pos_x[0] + 1 && _gthis.currentlySelectedPoint.y == pos_y[0]) {
+							_gthis.gameGrid.setGridDataByCoords(pos_x[0],pos_y[0],gameGrid_GridWithBordersToggleType.topBorder);
+							flixel_util_FlxSpriteUtil.drawLine(_gthis.linesCanvas,coordX[0] + 2,coordY[0] + 2,endXRight[0] + 2,coordY[0] + 2,_gthis.selectedLineStyle);
+						} else if(_gthis.currentlySelectedPoint.x == pos_x[0] - 1 && _gthis.currentlySelectedPoint.y == pos_y[0]) {
+							_gthis.gameGrid.setGridDataByCoords(pos_x[0] - 1,pos_y[0],gameGrid_GridWithBordersToggleType.topBorder);
+							flixel_util_FlxSpriteUtil.drawLine(_gthis.linesCanvas,coordX[0] + 2,coordY[0] + 2,endXLeft[0] + 2,coordY[0] + 2,_gthis.selectedLineStyle);
+						}
+						_gthis.currentlySelectedPoint.set_x(-3);
+						_gthis.currentlySelectedPoint.set_y(-3);
+						_gthis.add(_gthis.linesCanvas);
+					}
+				};
+			})(pos_y,pos_x,endYTop,endXLeft,endYDown,endXRight,coordY,coordX),(function(pos_y,pos_x) {
+				return function(s) {
+					haxe_Log.trace("MouseUp  " + pos_x[0] + " " + pos_y[0],{ fileName : "source/PlayState.hx", lineNumber : 121, className : "PlayState", methodName : "create"});
 				};
 			})(pos_y,pos_x),(function(pos_y,pos_x) {
 				return function(s) {
-					haxe_Log.trace("MouseUp  " + pos_x[0] + " " + pos_y[0],{ fileName : "source/PlayState.hx", lineNumber : 62, className : "PlayState", methodName : "create"});
+					haxe_Log.trace("MouseOver  " + pos_x[0] + " " + pos_y[0],{ fileName : "source/PlayState.hx", lineNumber : 125, className : "PlayState", methodName : "create"});
 				};
 			})(pos_y,pos_x),(function(pos_y,pos_x) {
 				return function(s) {
-					haxe_Log.trace("MouseOver  " + pos_x[0] + " " + pos_y[0],{ fileName : "source/PlayState.hx", lineNumber : 66, className : "PlayState", methodName : "create"});
-				};
-			})(pos_y,pos_x),(function(pos_y,pos_x) {
-				return function(s) {
-					haxe_Log.trace("MouseOut  " + pos_x[0] + " " + pos_y[0],{ fileName : "source/PlayState.hx", lineNumber : 70, className : "PlayState", methodName : "create"});
+					haxe_Log.trace("MouseOut  " + pos_x[0] + " " + pos_y[0],{ fileName : "source/PlayState.hx", lineNumber : 129, className : "PlayState", methodName : "create"});
 				};
 			})(pos_y,pos_x));
 			this.dots.push(newDot);
-			var startX = (this.padding + this.dotSpacing / 2 | 0) + pos_x[0] * this.dotSpacing;
-			var startY = (this.padding + this.dotSpacing / 2 | 0) + pos_y[0] * this.dotSpacing;
-			var endXRight = (this.padding + this.dotSpacing / 2 | 0) + (pos_x[0] + 1) * this.dotSpacing;
-			var endYDown = (this.padding + this.dotSpacing / 2 | 0) + (pos_y[0] + 1) * this.dotSpacing;
+			this.eventDots.push(newEventDot);
 			if(pos_x[0] < this.gridWidth - 1) {
-				flixel_util_FlxSpriteUtil.drawLine(this.linesCanvas,startX + 2,startY + 2,endXRight + 2,startY + 2,this.baseLineStyle);
+				flixel_util_FlxSpriteUtil.drawLine(this.linesCanvas,coordX[0] + 2,coordY[0] + 2,endXRight[0] + 2,coordY[0] + 2,this.baseLineStyle);
 			}
 			if(pos_y[0] < this.gridHeight - 1) {
-				flixel_util_FlxSpriteUtil.drawLine(this.linesCanvas,startX + 2,startY + 2,startX + 2,endYDown + 2,this.baseLineStyle);
+				flixel_util_FlxSpriteUtil.drawLine(this.linesCanvas,coordX[0] + 2,coordY[0] + 2,coordX[0] + 2,endYDown[0] + 2,this.baseLineStyle);
 			}
 		}
 		this.add(this.linesCanvas);
 		var _g = 0;
 		var _g1 = this.dots;
+		while(_g < _g1.length) {
+			var dot = _g1[_g];
+			++_g;
+			this.add(dot);
+		}
+		var _g = 0;
+		var _g1 = this.eventDots;
 		while(_g < _g1.length) {
 			var dot = _g1[_g];
 			++_g;
@@ -45347,16 +45446,16 @@ var flixel_util_FlxVerticalAlign = $hxEnums["flixel.util.FlxVerticalAlign"] = { 
 	,CENTER: {_hx_index:1,__enum__:"flixel.util.FlxVerticalAlign",toString:$estr}
 	,BOTTOM: {_hx_index:2,__enum__:"flixel.util.FlxVerticalAlign",toString:$estr}
 };
-var gameGrid_GridIterator = function(gridWidth,gridHeight) {
+var gameGrid_GridSquareIterator = function(gridWidth,gridHeight) {
 	this.i = 0;
 	this.gridHeight = 0;
 	this.gridWidth = 0;
 	this.gridWidth = gridWidth;
 	this.gridHeight = gridHeight;
 };
-$hxClasses["gameGrid.GridIterator"] = gameGrid_GridIterator;
-gameGrid_GridIterator.__name__ = "gameGrid.GridIterator";
-gameGrid_GridIterator.prototype = {
+$hxClasses["gameGrid.GridSquareIterator"] = gameGrid_GridSquareIterator;
+gameGrid_GridSquareIterator.__name__ = "gameGrid.GridSquareIterator";
+gameGrid_GridSquareIterator.prototype = {
 	gridWidth: null
 	,gridHeight: null
 	,i: null
@@ -45364,7 +45463,7 @@ gameGrid_GridIterator.prototype = {
 		return this.i < this.gridWidth * this.gridHeight;
 	}
 	,next: function() {
-		return new gameGrid_GridIteratorObject(this.i++,this.gridWidth);
+		return new gameGrid_GridSquareIteratorObject(this.i++,this.gridWidth);
 	}
 	,get_x: function() {
 		return this.i % this.gridWidth;
@@ -45372,24 +45471,70 @@ gameGrid_GridIterator.prototype = {
 	,get_y: function() {
 		return this.i / this.gridWidth | 0;
 	}
-	,__class__: gameGrid_GridIterator
+	,__class__: gameGrid_GridSquareIterator
 };
-var gameGrid_GridIteratorObject = function(index,gridWidth) {
+var gameGrid_GridSquareIteratorObject = function(index,gridWidth) {
 	this.index = index;
 	this.x = index % gridWidth;
 	this.y = index / gridWidth | 0;
 };
-$hxClasses["gameGrid.GridIteratorObject"] = gameGrid_GridIteratorObject;
-gameGrid_GridIteratorObject.__name__ = "gameGrid.GridIteratorObject";
-gameGrid_GridIteratorObject.prototype = {
+$hxClasses["gameGrid.GridSquareIteratorObject"] = gameGrid_GridSquareIteratorObject;
+gameGrid_GridSquareIteratorObject.__name__ = "gameGrid.GridSquareIteratorObject";
+gameGrid_GridSquareIteratorObject.prototype = {
 	index: null
 	,x: null
 	,y: null
-	,__class__: gameGrid_GridIteratorObject
+	,__class__: gameGrid_GridSquareIteratorObject
+};
+var gameGrid_GridCornerIterator = function(gridWidth,gridHeight) {
+	this.i = 0;
+	this.gridHeight = 0;
+	this.gridWidth = 0;
+	this.gridWidth = gridWidth;
+	this.gridHeight = gridHeight;
+};
+$hxClasses["gameGrid.GridCornerIterator"] = gameGrid_GridCornerIterator;
+gameGrid_GridCornerIterator.__name__ = "gameGrid.GridCornerIterator";
+gameGrid_GridCornerIterator.prototype = {
+	gridWidth: null
+	,gridHeight: null
+	,i: null
+	,hasNext: function() {
+		return this.i < (this.gridWidth + 1) * (this.gridHeight + 1);
+	}
+	,next: function() {
+		return new gameGrid_GridCornerIteratorObject(this.i++,this.gridWidth);
+	}
+	,get_x: function() {
+		return this.i % (this.gridWidth + 1);
+	}
+	,get_y: function() {
+		return this.i / (this.gridWidth + 1) | 0;
+	}
+	,__class__: gameGrid_GridCornerIterator
+};
+var gameGrid_GridCornerIteratorObject = function(index,gridWidth) {
+	this.index = index;
+	this.x = index % (gridWidth + 1);
+	this.y = index / (gridWidth + 1) | 0;
+};
+$hxClasses["gameGrid.GridCornerIteratorObject"] = gameGrid_GridCornerIteratorObject;
+gameGrid_GridCornerIteratorObject.__name__ = "gameGrid.GridCornerIteratorObject";
+gameGrid_GridCornerIteratorObject.prototype = {
+	index: null
+	,x: null
+	,y: null
+	,__class__: gameGrid_GridCornerIteratorObject
+};
+var gameGrid_GridWithBordersToggleType = $hxEnums["gameGrid.GridWithBordersToggleType"] = { __ename__ : "gameGrid.GridWithBordersToggleType", __constructs__ : ["topLeftCorner","topBorder","leftBorder"]
+	,topLeftCorner: {_hx_index:0,__enum__:"gameGrid.GridWithBordersToggleType",toString:$estr}
+	,topBorder: {_hx_index:1,__enum__:"gameGrid.GridWithBordersToggleType",toString:$estr}
+	,leftBorder: {_hx_index:2,__enum__:"gameGrid.GridWithBordersToggleType",toString:$estr}
 };
 var gameGrid_GridWithBorders = function(gridWidth,gridHeight) {
 	this.gridLeftBorderSet = 0;
 	this.gridTopBorderSet = 0;
+	this.gridTopLeftCornerSelected = 0;
 	this.gridHeight = 0;
 	this.gridWidth = 0;
 	this.gridWidth = gridWidth;
@@ -45400,23 +45545,51 @@ gameGrid_GridWithBorders.__name__ = "gameGrid.GridWithBorders";
 gameGrid_GridWithBorders.prototype = {
 	gridWidth: null
 	,gridHeight: null
+	,gridTopLeftCornerSelected: null
 	,gridTopBorderSet: null
 	,gridLeftBorderSet: null
-	,getSquareBordersByCoords: function(x,y) {
-		var borderIdx = 2 * x + y * (this.gridWidth + 1);
-		if(borderIdx > this.gridWidth * this.gridHeight || borderIdx < 0) {
+	,setGridDataByCoords: function(x,y,type) {
+		var borderIdx = x + y * (this.gridWidth + 1);
+		if(borderIdx > (this.gridWidth + 1) * (this.gridHeight + 1) || borderIdx < 0) {
 			return null;
+		}
+		var newMask = 1 >> borderIdx;
+		switch(type._hx_index) {
+		case 0:
+			this.gridTopLeftCornerSelected |= newMask;
+			break;
+		case 1:
+			this.gridTopBorderSet |= newMask;
+			break;
+		case 2:
+			this.gridLeftBorderSet |= newMask;
+			break;
+		}
+		return true;
+	}
+	,getSquareBordersByCoords: function(x,y) {
+		if(x < 0 || y < 0 || x * y >= this.gridWidth * this.gridHeight) {
+			return haxe_ds_Option.None;
 		}
 		var this1 = new Array(4);
 		var squareData = this1;
-		var left = (this.gridLeftBorderSet & 1 << borderIdx) != 0;
-		var top = (this.gridTopBorderSet & 1 << borderIdx) != 0;
-		var right = (this.gridLeftBorderSet & 1 << borderIdx + 1) != 0;
-		var bottom = (this.gridTopBorderSet & 1 << borderIdx + 1) != 0;
-		squareData[0] = left;
-		squareData[1] = top;
-		squareData[2] = right;
-		squareData[3] = bottom;
+		var borderIdx = x + y * (this.gridWidth + 1);
+		if(borderIdx < (this.gridWidth + 1) * (this.gridHeight + 1) && borderIdx >= 0) {
+			var left = (this.gridLeftBorderSet & 1 << borderIdx) != 0;
+			squareData[0] = left;
+			var top = (this.gridTopBorderSet & 1 << borderIdx) != 0;
+			squareData[1] = top;
+		}
+		var borderRightIdx = x + 1 + y * (this.gridWidth + 1);
+		if(borderRightIdx < (this.gridWidth + 1) * (this.gridHeight + 1) && borderRightIdx >= 0) {
+			var right = (this.gridLeftBorderSet & 1 << borderRightIdx + 1) != 0;
+			squareData[2] = right;
+		}
+		var borderBottomIdx = x + (y + 1) * (this.gridWidth + 1);
+		if(borderBottomIdx < (this.gridWidth + 1) * (this.gridHeight + 1) && borderBottomIdx >= 0) {
+			var bottom = (this.gridTopBorderSet & 1 << borderBottomIdx + 1) != 0;
+			squareData[3] = bottom;
+		}
 		var res = haxe_ds_Option.Some(squareData);
 		return res;
 	}
@@ -45455,6 +45628,18 @@ gameGrid_GridWithBorders.prototype = {
 			}
 			break;
 		case 1:
+			return false;
+		}
+	}
+	,isTopLeftCornerByCoords: function(x,y) {
+		if(x < 0 || y < 0 || x * y >= this.gridWidth * this.gridHeight) {
+			return false;
+		}
+		var borderIdx = x + y * (this.gridWidth + 1);
+		var isValidIdx = borderIdx < (this.gridWidth + 1) * (this.gridHeight + 1) && borderIdx >= 0;
+		if(isValidIdx) {
+			return (borderIdx & this.gridTopLeftCornerSelected) != 1;
+		} else {
 			return false;
 		}
 	}
@@ -67145,7 +67330,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 620182;
+	this.version = 635828;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = "lime.utils.AssetCache";
